@@ -130,8 +130,10 @@ def create_task():
     try:
         conn = get_db_connection()
         cur  = conn.cursor()
-        cur.execute("INSERT INTO tasks (user_id, title, description, priority, status) VALUES (%s, %s, %s, %s, %s) RETURNING *",
-                    (session["user_id"], title, description, priority, status))
+        cur.execute(
+            "INSERT INTO tasks (user_id, title, description, priority, status) VALUES (%s, %s, %s, %s, %s) RETURNING *",
+            (session["user_id"], title, description, priority, status)
+        )
         task = dict(cur.fetchone())
         conn.commit()
         cur.close()

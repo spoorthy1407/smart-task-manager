@@ -1,11 +1,55 @@
 ﻿let allTasks = [];
 let activeFilter = "all";
+let currentUserId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  fetchCurrentUser();
   fetchTasks();
   fetchAnalytics();
   setupEventListeners();
+  setupWebSocket();
 });
+
+async function fetchCurrentUser() {
+  const res = await fetch("/api/tasks");
+  if (res.status === 401) { window.location.href = "/login"; }
+}
+
+function setupWebSocket() {
+  const socket = io({ transports: ["polling", "websocket"] });
+
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
+    document.getElementById("live-badge").style.color = "#16a34a";
+  });
+
+  socket.on("disconnect", () => {
+    document.getElementById("live-badge").style.color = "#9ca3af";
+  });
+
+  socket.on("new_task", (task) => {
+    console.log("New task received via socket:", task);
+    if (!allTasks.find(t => t.id === task.id)) {
+      allTasks.unshift(task);
+      renderTasks();
+      fetchAnalytics();
+    }
+  });
+
+  socket.on("task_changed", (updated) => {
+    console.log("Task updated via socket:", updated);
+    allTasks = allTasks.map(t => t.id === updated.id ? updated : t);
+    renderTasks();
+    fetchAnalytics();
+  });
+
+  socket.on("task_removed", ({ id }) => {
+    console.log("Task removed via socket:", id);
+    allTasks = allTasks.filter(t => t.id !== id);
+    renderTasks();
+    fetchAnalytics();
+  });
+}
 
 async function fetchTasks() {
   try {
@@ -13,7 +57,7 @@ async function fetchTasks() {
     if (res.status === 401) { window.location.href = "/login"; return; }
     allTasks = await res.json();
     renderTasks();
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error("fetchTasks error:", e); }
 }
 
 async function fetchAnalytics() {
@@ -26,7 +70,7 @@ async function fetchAnalytics() {
     document.getElementById("stat-pending").textContent = d.pending;
     document.getElementById("stat-pct").textContent = d.completion_pct + "%";
     document.getElementById("progress-fill").style.width = d.completion_pct + "%";
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error("fetchAnalytics error:", e); }
 }
 
 function renderTasks() {
@@ -65,7 +109,6 @@ async function addTask() {
   const desc     = document.getElementById("task-desc").value.trim();
   const priority = document.getElementById("task-priority").value;
   const status   = document.getElementById("task-status").value;
-  const msgEl    = document.getElementById("form-msg");
 
   if (!title) { showFormMsg("Title is required","error"); return; }
 
@@ -74,26 +117,35 @@ async function addTask() {
   btn.disabled = true;
 
   try {
-    const res  = await fetch("/api/tasks", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({title, description:desc, priority, status})
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description: desc, priority, status })
     });
+
     const data = await res.json();
+    console.log("Add task response:", res.status, data);
+
     if (res.status === 401) { window.location.href = "/login"; return; }
+
     if (res.ok) {
-      allTasks.unshift(data);
+      if (!allTasks.find(t => t.id === data.id)) {
+        allTasks.unshift(data);
+      }
       renderTasks();
       fetchAnalytics();
       document.getElementById("task-title").value = "";
       document.getElementById("task-desc").value  = "";
       showFormMsg("Task added!","success");
-      setTimeout(() => { msgEl.className = "form-msg hidden"; }, 2000);
+      setTimeout(() => {
+        document.getElementById("form-msg").className = "form-msg hidden";
+      }, 2000);
     } else {
-      showFormMsg(data.error || "Failed to add","error");
+      showFormMsg(data.error || "Failed to add task","error");
     }
   } catch(e) {
-    showFormMsg("Network error","error");
+    console.error("addTask error:", e);
+    showFormMsg("Network error — try again","error");
   } finally {
     btn.textContent = "+ Add Task";
     btn.disabled = false;
@@ -104,9 +156,9 @@ async function toggleComplete(id, currentStatus) {
   const newStatus = currentStatus === "completed" ? "pending" : "completed";
   try {
     const res = await fetch(`/api/tasks/${id}`, {
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({status: newStatus})
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus })
     });
     if (res.ok) {
       const updated = await res.json();
@@ -137,9 +189,9 @@ async function saveEdit() {
   if (!title) { alert("Title is required"); return; }
   try {
     const res  = await fetch(`/api/tasks/${id}`, {
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({title, description:desc, priority, status})
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description: desc, priority, status })
     });
     const data = await res.json();
     if (res.ok) {
@@ -160,7 +212,7 @@ function closeEditModal() {
 async function removeTask(id) {
   if (!confirm("Delete this task?")) return;
   try {
-    const res = await fetch(`/api/tasks/${id}`, {method:"DELETE"});
+    const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
     if (res.ok) {
       allTasks = allTasks.filter(t => t.id !== id);
       renderTasks();
@@ -174,7 +226,7 @@ function setupEventListeners() {
   document.getElementById("save-edit").addEventListener("click", saveEdit);
   document.getElementById("cancel-edit").addEventListener("click", closeEditModal);
   document.getElementById("logout-btn").addEventListener("click", async () => {
-    await fetch("/api/auth/logout", {method:"POST"});
+    await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   });
   document.querySelectorAll(".filter-btn").forEach(btn => {
