@@ -1,4 +1,4 @@
--- run this file to set up the database tables
+
 -- psql -U postgres -d taskmanager -f schema.sql
 
 -- users table
@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS tasks (
     created_at  TIMESTAMP    DEFAULT NOW()
 );
 
--- index to speed up per-user task queries
+
 CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);

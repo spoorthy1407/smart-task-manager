@@ -8,7 +8,7 @@ def compute_stats(tasks: list) -> dict:
     using pandas for data manipulation and numpy for calculations
     """
 
-    # if no tasks yet just return zeros
+    
     if not tasks:
         return {
             "total": 0,
@@ -28,10 +28,10 @@ def compute_stats(tasks: list) -> dict:
     pending     = int((df["status"] == "pending").sum())
     in_progress = int((df["status"] == "in_progress").sum())
 
-    # numpy round for cleaner percentage
+    
     completion_pct = float(np.round((completed / total) * 100, 1))
 
-    # priority breakdown using value_counts
+    
     prio_counts = df["priority"].value_counts().to_dict()
     priority_breakdown = {
         "low":    int(prio_counts.get("low", 0)),
@@ -41,7 +41,7 @@ def compute_stats(tasks: list) -> dict:
 
     high_priority_count = priority_breakdown["high"]
 
-    # average tasks created per day
+    
     df["created_at"] = pd.to_datetime(df["created_at"])
     days_active = df["created_at"].dt.date.nunique()
     avg_per_day = float(np.round(total / max(days_active, 1), 2))
