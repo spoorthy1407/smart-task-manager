@@ -11,7 +11,7 @@ body {
   min-height: 100vh;
 }
 
-/* ── navbar ──────────────────────────────────── */
+
 
 .navbar {
   background: #fff;
@@ -71,7 +71,7 @@ body {
   color: #ef4444;
 }
 
-/* ── page wrapper ─────────────────────────────── */
+
 
 .page-wrapper {
   max-width: 1200px;
@@ -86,7 +86,7 @@ body {
   margin-bottom: 16px;
 }
 
-/* ── analytics ────────────────────────────────── */
+
 
 .analytics-section {
   margin-bottom: 32px;
@@ -139,7 +139,7 @@ body {
   transition: width 0.8s ease;
 }
 
-/* ── main content grid ────────────────────────── */
+
 
 .content-grid {
   display: grid;
@@ -152,7 +152,7 @@ body {
   .content-grid { grid-template-columns: 1fr; }
 }
 
-/* ── add task panel ───────────────────────────── */
+
 
 .add-task-panel {
   background: #fff;
@@ -229,7 +229,7 @@ body {
 .form-msg.error   { background: #fef2f2; color: #dc2626; }
 .form-msg.success { background: #f0fdf4; color: #16a34a; }
 
-/* ── task list panel ──────────────────────────── */
+
 
 .task-list-panel {
   background: #fff;
@@ -272,7 +272,7 @@ body {
   color: #fff;
 }
 
-/* ── task cards ───────────────────────────────── */
+
 
 .task-card {
   border: 1px solid #e5e7eb;
@@ -402,7 +402,7 @@ body {
 .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
 .empty-state p     { font-size: 0.9rem; }
 
-/* ── modal ────────────────────────────────────── */
+
 
 .modal-bg {
   position: fixed;
@@ -466,7 +466,7 @@ body {
 }
 .btn-save:hover { background: #4338ca; }
 
-/* ── toast ────────────────────────────────────── */
+
 
 .toast {
   position: fixed;
